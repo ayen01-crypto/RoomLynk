@@ -1,6 +1,6 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, Phone, Lock, User as UserIcon, CheckCircle2, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Phone, Lock, User as UserIcon, CheckCircle2, MessageSquare, GraduationCap, Home, ChevronDown, Mail } from 'lucide-react';
 import { UserRole, User } from '../types';
 
 interface PhoneAuthProps {
@@ -9,15 +9,23 @@ interface PhoneAuthProps {
   onSuccess: (user: User) => void;
 }
 
-export default function PhoneAuth({ role, onBack, onSuccess }: PhoneAuthProps) {
+export default function PhoneAuth({ role: initialRole, onBack, onSuccess }: PhoneAuthProps) {
+  const [role, setRole] = useState<UserRole>(initialRole);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
   const [step, setStep] = useState<'input' | 'otp'>('input');
   const [otpCode, setOtpCode] = useState('');
   const [generatedOtp, setGeneratedOtp] = useState('');
   const [smsToast, setSmsToast] = useState<string | null>(null);
   const [countdown, setCountdown] = useState(60);
   const [error, setError] = useState('');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  // Keep role state synchronized with props if they change
+  useEffect(() => {
+    setRole(initialRole);
+  }, [initialRole]);
 
   // Countdown timer for OTP
   useEffect(() => {
@@ -37,6 +45,26 @@ export default function PhoneAuth({ role, onBack, onSuccess }: PhoneAuthProps) {
     if (!fullName.trim()) {
       setError('Please enter your full name');
       return;
+    }
+
+    if (!email.trim()) {
+      setError('Please enter your email address');
+      return;
+    }
+
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      setError('Please enter a valid email address');
+      return;
+    }
+
+    // Role-specific email restriction
+    if (role === 'student') {
+      if (!email.trim().toLowerCase().endsWith('@kab.ac.ug')) {
+        setError('Kabale University students can only register using their official email ending with @kab.ac.ug');
+        return;
+      }
     }
 
     if (!phoneNumber || phoneNumber.length < 9) {
@@ -73,6 +101,7 @@ export default function PhoneAuth({ role, onBack, onSuccess }: PhoneAuthProps) {
       phone: `+256 ${phoneNumber}`,
       role: role,
       name: fullName,
+      email: email.trim(),
       avatarUrl: role === 'student' 
         ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'
         : 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=150&q=80',
@@ -137,9 +166,9 @@ export default function PhoneAuth({ role, onBack, onSuccess }: PhoneAuthProps) {
         <div className="flex-1 flex flex-col justify-between">
           <div className="space-y-6">
             <div>
-              <h2 className="text-2xl font-extrabold text-slate-900">Create Account</h2>
+              <h2 className="text-2xl font-extrabold text-slate-900">Sign In / Register</h2>
               <p className="text-sm text-slate-500 mt-1 leading-relaxed">
-                We'll send you a 6-digit OTP code to verify your phone number and secure your account.
+                Provide your details to register or sign in. Accounts are verified immediately via secure SMS OTP.
               </p>
             </div>
 
@@ -150,8 +179,72 @@ export default function PhoneAuth({ role, onBack, onSuccess }: PhoneAuthProps) {
                 </div>
               )}
 
+              {/* Account Type Custom Dropdown Selector */}
+              <div className="space-y-1.5 relative">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
+                  Account Type
+                </label>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                    className="w-full bg-white text-slate-800 text-sm px-4 py-3.5 rounded-xl border border-slate-100 shadow-sm flex items-center justify-between hover:border-blue-500 focus:outline-none transition-all font-bold"
+                  >
+                    <div className="flex items-center space-x-2.5">
+                      {role === 'student' ? (
+                        <GraduationCap className="w-5 h-5 text-blue-600" />
+                      ) : (
+                        <Home className="w-5 h-5 text-amber-500" />
+                      )}
+                      <span>{role === 'student' ? 'Student' : 'Landlord'}</span>
+                    </div>
+                    <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  <AnimatePresence>
+                    {isDropdownOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-slate-200/50 rounded-xl shadow-lg overflow-hidden py-1"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setRole('student');
+                            setIsDropdownOpen(false);
+                          }}
+                          className={`w-full text-left px-4 py-3 text-sm font-bold flex items-center space-x-2.5 hover:bg-slate-50 transition-colors ${
+                            role === 'student' ? 'text-blue-600 bg-blue-50/40' : 'text-slate-700'
+                          }`}
+                        >
+                          <GraduationCap className="w-5 h-5 text-blue-600" />
+                          <span>Student</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setRole('landlord');
+                            setIsDropdownOpen(false);
+                          }}
+                          className={`w-full text-left px-4 py-3 text-sm font-bold flex items-center space-x-2.5 hover:bg-slate-50 transition-colors ${
+                            role === 'landlord' ? 'text-amber-500 bg-amber-50/40' : 'text-slate-700'
+                          }`}
+                        >
+                          <Home className="w-5 h-5 text-amber-500" />
+                          <span>Landlord</span>
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
+
+              {/* Full Name field */}
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Full Name</label>
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Full Name</label>
                 <div className="relative">
                   <UserIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
                   <input
@@ -165,8 +258,34 @@ export default function PhoneAuth({ role, onBack, onSuccess }: PhoneAuthProps) {
                 </div>
               </div>
 
+              {/* Email Address field with Kabale verification notice */}
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Phone Number</label>
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Email Address</label>
+                <div className="relative">
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                  <input
+                    type="email"
+                    required
+                    placeholder={role === 'student' ? 'e.g. k.aryatuha@kab.ac.ug' : 'e.g. landlord@gmail.com'}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full bg-white text-slate-800 placeholder-slate-400 text-sm pl-11 pr-4 py-3.5 rounded-xl border border-slate-100 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all font-medium"
+                  />
+                </div>
+                <p className="text-[10px] font-bold text-slate-400">
+                  {role === 'student' ? (
+                    <span className="text-blue-600 font-extrabold uppercase tracking-wide">
+                      * Required: Official @kab.ac.ug Student Email
+                    </span>
+                  ) : (
+                    <span>Any valid personal or business email address</span>
+                  )}
+                </p>
+              </div>
+
+              {/* Phone Number field */}
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Phone Number</label>
                 <div className="relative flex">
                   {/* Uganda Code Badge */}
                   <div className="absolute left-3.5 top-1/2 -translate-y-1/2 flex items-center space-x-1.5 pointer-events-none">

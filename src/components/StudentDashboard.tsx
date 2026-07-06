@@ -136,19 +136,23 @@ export default function StudentDashboard({
   return (
     <div className="flex flex-col min-h-screen bg-slate-50 text-slate-800 pb-20">
       {/* Search Filter Modal */}
-      <FilterModal
-        isOpen={isFilterOpen}
-        onClose={() => setIsFilterOpen(false)}
-        selectedArea={selectedArea}
-        setSelectedArea={setSelectedArea}
-        priceRange={priceRange}
-        setPriceRange={setPriceRange}
-        roomType={roomType}
-        setRoomType={setRoomType}
-        selfContainedOnly={selfContainedOnly}
-        setSelfContainedOnly={setSelfContainedOnly}
-        onApply={() => setIsFilterOpen(false)}
-      />
+      <AnimatePresence>
+        {isFilterOpen && (
+          <FilterModal
+            isOpen={isFilterOpen}
+            onClose={() => setIsFilterOpen(false)}
+            selectedArea={selectedArea}
+            setSelectedArea={setSelectedArea}
+            priceRange={priceRange}
+            setPriceRange={setPriceRange}
+            roomType={roomType}
+            setRoomType={setRoomType}
+            selfContainedOnly={selfContainedOnly}
+            setSelfContainedOnly={setSelfContainedOnly}
+            onApply={() => setIsFilterOpen(false)}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Main Tab Render Block */}
       <div className="flex-1">
@@ -219,74 +223,96 @@ export default function StudentDashboard({
                 </span>
               </div>
 
-              {filteredListings.length > 0 ? (
-                <div className="grid grid-cols-1 gap-4">
-                  {filteredListings.map((item) => (
-                    <motion.div
-                      key={item.id}
-                      whileHover={{ y: -2 }}
-                      onClick={() => onViewListing(item)}
-                      className="bg-white rounded-2xl border border-slate-100 shadow-xs overflow-hidden cursor-pointer flex flex-col"
-                    >
-                      {/* Image section with relative components */}
-                      <div className="relative h-44 bg-slate-200">
-                        <img
-                          src={item.imageUrl}
-                          alt={item.title}
-                          referrerPolicy="no-referrer"
-                          className="w-full h-full object-cover"
-                        />
-                        {/* Rating block */}
-                        <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-xs px-2.5 py-1 rounded-lg shadow-sm flex items-center space-x-1">
-                          <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-                          <span className="text-[10px] font-extrabold text-slate-800">{item.rating}</span>
-                        </div>
-
-                        {/* Save block */}
-                        <button
-                          onClick={(e) => toggleSave(item.id, e)}
-                          className="absolute top-3 right-3 p-2 bg-white/95 backdrop-blur-xs rounded-full shadow-sm text-slate-400 hover:text-red-500 transition-colors"
+              <AnimatePresence mode="popLayout">
+                {filteredListings.length > 0 ? (
+                  <motion.div
+                    key="listings-grid"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="grid grid-cols-1 gap-4"
+                  >
+                    <AnimatePresence mode="popLayout">
+                      {filteredListings.map((item) => (
+                        <motion.div
+                          key={item.id}
+                          layout
+                          initial={{ opacity: 0, scale: 0.97, y: 15 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                          transition={{ duration: 0.2 }}
+                          whileHover={{ y: -2 }}
+                          onClick={() => onViewListing(item)}
+                          className="bg-white rounded-2xl border border-slate-100 shadow-xs overflow-hidden cursor-pointer flex flex-col"
                         >
-                          <Heart
-                            className={`w-4 h-4 ${
-                              savedIds.includes(item.id) ? 'fill-red-500 text-red-500' : ''
-                            }`}
-                          />
-                        </button>
+                          {/* Image section with relative components */}
+                          <div className="relative h-44 bg-slate-200">
+                            <img
+                              src={item.imageUrl}
+                              alt={item.title}
+                              referrerPolicy="no-referrer"
+                              className="w-full h-full object-cover"
+                            />
+                            {/* Rating block */}
+                            <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-xs px-2.5 py-1 rounded-lg shadow-sm flex items-center space-x-1">
+                              <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                              <span className="text-[10px] font-extrabold text-slate-800">{item.rating}</span>
+                            </div>
 
-                        <div className="absolute bottom-3 left-3 bg-blue-600 text-white px-2.5 py-1 rounded-lg text-[9px] font-black tracking-wide uppercase">
-                          {item.roomType} • {item.isSelfContained ? 'Self Contained' : 'Shared'}
-                        </div>
-                      </div>
+                            {/* Save block */}
+                            <button
+                              onClick={(e) => toggleSave(item.id, e)}
+                              className="absolute top-3 right-3 p-2 bg-white/95 backdrop-blur-xs rounded-full shadow-sm text-slate-400 hover:text-red-500 transition-colors"
+                            >
+                              <Heart
+                                className={`w-4 h-4 ${
+                                  savedIds.includes(item.id) ? 'fill-red-500 text-red-500' : ''
+                                }`}
+                              />
+                            </button>
 
-                      {/* Info section */}
-                      <div className="p-4 space-y-2">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h4 className="text-sm font-extrabold text-slate-900 line-clamp-1">{item.title}</h4>
-                            <p className="text-[11px] text-slate-400 font-semibold flex items-center mt-0.5">
-                              <MapPin className="w-3.5 h-3.5 text-blue-500 mr-1" />
-                              {item.locationDetail}
-                            </p>
+                            <div className="absolute bottom-3 left-3 bg-blue-600 text-white px-2.5 py-1 rounded-lg text-[9px] font-black tracking-wide uppercase">
+                              {item.roomType} • {item.isSelfContained ? 'Self Contained' : 'Shared'}
+                            </div>
                           </div>
-                          <div className="text-right">
-                            <p className="text-sm font-black text-blue-600 font-mono">
-                              UGX {item.pricePerSemester.toLocaleString()}
-                            </p>
-                            <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">
-                              per semester
-                            </span>
+
+                          {/* Info section */}
+                          <div className="p-4 space-y-2">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <h4 className="text-sm font-extrabold text-slate-900 line-clamp-1">{item.title}</h4>
+                                <p className="text-[11px] text-slate-400 font-semibold flex items-center mt-0.5">
+                                  <MapPin className="w-3.5 h-3.5 text-blue-500 mr-1" />
+                                  {item.locationDetail}
+                                </p>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-sm font-black text-blue-600 font-mono">
+                                  UGX {item.pricePerSemester.toLocaleString()}
+                                </p>
+                                <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">
+                                  per semester
+                                </span>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-12 bg-white rounded-2xl border border-slate-100">
-                  <p className="text-sm text-slate-400 font-medium">No hostels match your filter choices.</p>
-                </div>
-              )}
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="no-listings"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="text-center py-12 bg-white rounded-2xl border border-slate-100"
+                  >
+                    <p className="text-sm text-slate-400 font-medium">No hostels match your filter choices.</p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
         )}
