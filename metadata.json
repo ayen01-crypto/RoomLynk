@@ -1,0 +1,6 @@
+{
+  "name": "RoomLynk Kabale",
+  "description": "A Progressive Web Application (PWA) student-landlord housing marketplace for Kabale University. Search, filter, message, book, and secure hostel accommodations.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
